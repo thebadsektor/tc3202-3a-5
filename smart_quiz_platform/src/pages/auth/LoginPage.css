@@ -1,0 +1,484 @@
+/* Enhanced Quiz Login CSS - More dynamic and engaging */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+
+body, html {
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+  font-family: 'Poppins', sans-serif;
+}
+
+.login-card {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899, #f43f5e);
+  background: linear-gradient(135deg, #1e3a8a, #6d28d9, #9333ea, #be185d);
+  background-size: 300% 300%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jaibot-image {
+  height: 26vh;
+  width: 20vw;
+  object-fit: contain;  /* Ensure image scales properly */
+}
+
+/* Add animated background shapes */
+.login-card::before {
+  content: '';
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  background: repeating-linear-gradient(
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 0.5%,
+    transparent 1%
+  );
+  transform: rotate(45deg);
+  animation: moveBg 20s linear infinite;
+}
+
+.login-content {
+  width: 100%;
+  max-width: 1000px;
+  background-color: rgba(255, 255, 255, 0.92);
+  border-radius: 16px;
+  padding: 35px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  margin: 20px;
+  position: relative;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Position image and input on opposite sides */
+}
+
+
+.login-content:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.25), 0 0 30px rgba(123, 97, 255, 0.2);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.auth-title {
+  color: #1a202c;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  position: relative;
+  font-size: 1.6rem;
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+.auth-title::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899);
+  margin: 10px auto 0;
+  border-radius: 4px;
+  animation: expandWidth 1.2s ease-in-out forwards;
+}
+
+.quiz-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899, #f43f5e);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 300% auto;
+  animation: gradientShift 3s ease infinite;
+  letter-spacing: 1.5px;
+  text-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: perspective(500px) rotateX(10deg);
+  margin-bottom: 10px;
+}
+
+.auth-error {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  transform-origin: center;
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #b91c1c;
+  padding: 12px 18px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+}
+
+.auth-form {
+  width: 60%; /* Adjust the width of the input form */
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-footer {
+  margin-top: 1px; /* Dagdag na espasyo sa itaas */
+  text-align: center;
+}
+
+.input-group {
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Style para sa password input at eye icon */
+.password-container {
+  position: relative;
+  width: 100%;
+}
+
+.auth-form input[type="password"],
+.auth-form input[type="text"] {
+  width: 100%;
+  padding-right: 40px; /* Para hindi matakpan ng icon ang text */
+}
+
+.show-password-icon {
+  position: absolute;
+  right: 10px;
+  top: 40%;
+  transform: translateY(-50%);
+  width: 24px; /* Adjust size */
+  height: 24px;
+  cursor: pointer;
+}
+
+.auth-form input {
+  max-width: 375px;
+  padding: 14px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.4s ease;
+  transform: translateY(0);
+  transform: translateX(1%);
+  color: white;
+  color: #1a202c;
+  background-color: rgba(255, 255, 255, 0.95);
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 1;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  background-color: white;
+  
+}
+
+.auth-form button {
+  width: 100%;
+  margin-bottom: -1px;
+  max-width: 378px; /* Set button max-width to match input width */
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899);
+  color: white;
+  font-weight: bold;
+  padding: 14px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  letter-spacing: 1.2px;
+  background-size: 200% auto;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+
+.auth-form button:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: 0.5s;
+}
+
+.auth-form button:hover {
+  transform: translateY(-5px);
+  background-position: right center;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form button:hover:after {
+  left: 100%;
+}
+
+.auth-form button:active {
+  transform: translateY(-2px);
+}
+
+.forgot-password-link {
+  margin-left: 5px;
+}
+
+.auth-link {
+  text-align: center;
+  color: #4b5563; /* Adjust spacing between button and link */
+  animation: fadeIn 1s ease 0.5s forwards;
+  opacity: 0;
+  margin-top: 16px; 
+  font-weight: 500;
+  transform: translate();
+}
+
+.auth-link a {
+  color: #3b82f6;
+  font-weight: 800;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.auth-link a:after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease;
+}
+
+.auth-link a:hover:after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* Create pulsing highlight effect for form */
+.auth-form::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #FFFFFF, #8b5cf6, #ec4899, #3b82f6);
+  z-index: -1;
+  border-radius: 18px;
+  background-size: 400% 400%;
+  animation: borderGlow 3s ease infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.login-content:hover .auth-form::before {
+  opacity: 0.7;
+}
+
+/* Animation keyframes */
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes moveBg {
+  0% {
+    transform: translateY(0) rotate(45deg);
+  }
+  100% {
+    transform: translateY(-1000px) rotate(45deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes borderGlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 80% {
+    transform: translateX(3px);
+  }
+  30%, 50%, 70% {
+    transform: translateX(-5px);
+  }
+  40%, 60% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes expandWidth {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 80px;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add floating particles in background */
+.login-card::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.2) 2px, transparent 2px);
+  background-size: 30px 30px, 50px 50px;
+  animation: floatParticles 20s linear infinite;
+}
+
+@keyframes floatParticles {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 100px 100px, 50px 50px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .login-content {
+    padding: 25px;
+    margin: 15px;
+  }
+  
+  .auth-title {
+    font-size: 1.4rem;
+  }
+  
+  .quiz-title {
+    font-size: 2rem;
+  }
+}
+
+/* Add glowing button effect */
+.auth-form button::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+  z-index: -1;
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background-size: 400% 400%;
+  animation: borderGlow 3s ease infinite;
+}
+
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .loading-circle {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Make sure button keeps consistent height during loading state */
+  .auth-form button {
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+.auth-form button:hover::before {
+  opacity: 1;
+}

@@ -1,0 +1,614 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+body, html {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+}
+
+.login-card {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1e3a8a, #6d28d9, #9333ea, #be185d);
+  background-size: 300% 300%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jaibot-image {
+  height: 26vh;
+  width: 20vw;
+  object-fit: contain;
+}
+
+/* Add animated background shapes */
+.login-card::before {
+  content: '';
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  background: repeating-linear-gradient(
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 0.5%,
+    transparent 1%
+  );
+  transform: rotate(45deg);
+  animation: moveBg 20s linear infinite;
+}
+
+/* Container for both login and signup forms */
+.auth-container {
+  width: 100%;
+  max-width: 1000px;
+  height: 600px;
+  position: relative;
+  margin: 20px;
+  perspective: 1500px;
+}
+
+/* Shared styles for the login/signup card */
+.login-content {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.92);
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.8s ease-in-out;
+  transform-style: preserve-3d;
+}
+
+/* Shared styles for both sides */
+.card-side {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  padding: 35px;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Login side (front) */
+.login-side {
+  z-index: 2;
+}
+
+/* Signup side (back) */
+.signup-side {
+  transform: rotateY(180deg);
+}
+
+/* Sliding overlay panel */
+.overlay-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  text-align: center;
+  border-radius: 16px 0 0 16px;
+  color: white;
+  transition: transform 0.8s ease-in-out;
+  z-index: 1;
+}
+
+/* When login is active */
+.login-active .overlay-panel {
+  transform: translateX(0);
+  border-radius: 16px 0 0 16px;
+}
+
+/* When signup is active */
+.signup-active .overlay-panel {
+  transform: translateX(100%);
+  border-radius: 0 16px 16px 0;
+}
+
+/* When signup is active - rotate the card */
+.signup-active .login-content {
+  transform: rotateY(-180deg);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.auth-title {
+  color: #1a202c;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  position: relative;
+  font-size: 1.6rem;
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+.auth-title::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899);
+  margin: 10px auto 0;
+  border-radius: 4px;
+  animation: expandWidth 1.2s ease-in-out forwards;
+}
+
+.quiz-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899, #f43f5e);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 300% auto;
+  animation: gradientShift 3s ease infinite;
+  letter-spacing: 1.5px;
+  text-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: perspective(500px) rotateX(10deg);
+  margin-bottom: 10px;
+}
+
+.auth-error {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  transform-origin: center;
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #b91c1c;
+  padding: 12px 18px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+}
+
+.auth-form {
+  width: 60%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-form-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-footer {
+  margin-top: 1px;
+  text-align: center;
+}
+
+.input-group {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.password-container {
+  position: relative;
+  width: 100%;
+}
+
+.auth-form input[type="password"],
+.auth-form input[type="text"],
+.auth-form input[type="email"] {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.show-password-icon {
+  position: absolute;
+  right: 10px;
+  top: 40%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.auth-form input {
+  max-width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.4s ease;
+  color: #1a202c;
+  background-color: rgba(255, 255, 255, 0.95);
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 1;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  background-color: white;
+}
+
+.auth-form button {
+  width: 100%;
+  margin-bottom: -1px;
+  max-width: 378px;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899);
+  color: white;
+  font-weight: bold;
+  padding: 14px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  letter-spacing: 1.2px;
+  background-size: 200% auto;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.auth-form button:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: 0.5s;
+}
+
+.auth-form button:hover {
+  transform: translateY(-5px);
+  background-position: right center;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form button:hover:after {
+  left: 100%;
+}
+
+.auth-form button:active {
+  transform: translateY(-2px);
+}
+
+.forgot-password-link {
+  margin-left: 5px;
+}
+
+.auth-link {
+  text-align: center;
+  color: #4b5563;
+  animation: fadeIn 1s ease 0.5s forwards;
+  opacity: 0;
+  margin-top: 16px;
+  font-weight: 500;
+}
+
+.auth-link a {
+  color: #3b82f6;
+  font-weight: 800;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.auth-link a:after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease;
+}
+
+.auth-link a:hover:after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* Overlay panel content */
+.overlay-content {
+  max-width: 400px;
+}
+
+.overlay-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.overlay-text {
+  margin-bottom: 25px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.overlay-button {
+  background-color: transparent;
+  border: 2px solid white;
+  color: white;
+  padding: 12px 30px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.overlay-button:hover {
+  background-color: white;
+  color: #8b5cf6;
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Animation keyframes */
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes moveBg {
+  0% {
+    transform: translateY(0) rotate(45deg);
+  }
+  100% {
+    transform: translateY(-1000px) rotate(45deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes borderGlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 80% {
+    transform: translateX(3px);
+  }
+  30%, 50%, 70% {
+    transform: translateX(-5px);
+  }
+  40%, 60% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes expandWidth {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 80px;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add floating particles in background */
+.login-card::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.2) 2px, transparent 2px);
+  background-size: 30px 30px, 50px 50px;
+  animation: floatParticles 20s linear infinite;
+}
+
+@keyframes floatParticles {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 100px 100px, 50px 50px;
+  }
+}
+
+/* Loading indicator */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.loading-circle {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Make sure button keeps consistent height during loading state */
+.auth-form button {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .auth-container {
+    max-width: 90%;
+    height: auto;
+  }
+  
+  .login-content {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .card-side {
+    position: relative;
+    flex-direction: column;
+    padding: 25px;
+  }
+  
+  .overlay-panel {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-radius: 16px 16px 0 0;
+    order: -1;
+  }
+  
+  .login-active .overlay-panel,
+  .signup-active .overlay-panel {
+    transform: translateX(0);
+    border-radius: 16px 16px 0 0;
+  }
+  
+  .auth-form {
+    width: 100%;
+    padding: 20px 0;
+  }
+  
+  .jaibot-container {
+    margin-top: 20px;
+  }
+  
+  .signup-side {
+    transform: none;
+  }
+  
+  .signup-active .login-content {
+    transform: none;
+  }
+  
+  .overlay-content {
+    padding: 20px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-container {
+    padding: 15px;
+  }
+  
+  .auth-title {
+    font-size: 1.4rem;
+  }
+  
+  .quiz-title {
+    font-size: 2rem;
+  }
+  
+  .input-group {
+    width: 100%;
+  }
+  
+  .overlay-title {
+    font-size: 1.5rem;
+  }
+  
+  .overlay-text {
+    font-size: 1rem;
+  }
+  
+  .jaibot-image {
+    height: 20vh;
+    width: 60vw;
+  }
+}
