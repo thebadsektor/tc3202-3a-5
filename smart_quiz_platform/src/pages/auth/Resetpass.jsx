@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; // Update the path as needed
+import { useAuth } from "../../context/AuthContext";
 import "./resetpass.css";
 
 const ForgotPassword = () => {
@@ -32,12 +32,14 @@ const ForgotPassword = () => {
   return (
     <div className="page-container">
       <div className="logo-container">
-        {/* You could add your logo here if needed */}
+        {/* Logo placeholder - replace with your own logo */}
+        <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 0C8.954 0 0 8.954 0 20s8.954 20 20 20 20-8.954 20-20S31.046 0 20 0zm0 30c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z" fill="#4F46E5"/>
+          <path d="M50 10h8c6.627 0 12 5.373 12 12s-5.373 12-12 12h-8V10z" fill="#4F46E5"/>
+          <path d="M80 10h25c2.761 0 5 2.239 5 5v20c0 2.761-2.239 5-5 5H80V10z" fill="#4F46E5" fillOpacity="0.6"/>
+        </svg>
       </div>
       <div className="forgot-password-container">
-        <div className="logo-container">
-          {/* Inner logo container if needed */}
-        </div>
         <div className="header">
           <h2>Reset Your Password</h2>
           <p className="subheading">Enter your email address to receive a password reset link</p>

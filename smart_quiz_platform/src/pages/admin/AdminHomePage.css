@@ -46,6 +46,56 @@ body {
   flex-direction: column;
 }
 
+/* Center the "Published Quizzes" heading - more specific selector */
+h2.section-title,
+.section-title,
+.admin-tab-content h2 {
+  text-align: center !important;
+  width: 100%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem 0;
+}
+
+.action-button.delete {
+  background-color: var(--danger-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+/* Also target the specific element by its text if needed */
+h2:contains("Published Quizzes") {
+  text-align: center !important;
+}
+
+/* Add more spacing between View and Delete buttons */
+.action-button {
+  margin-right: 10px;
+  min-width: 70px;
+}
+
+/* Add more margin between the buttons if they're in their own containers */
+.actions-cell .view,
+td.actions-cell button:first-child {
+  margin-right: 15px;
+}
+
+/* Increase spacing in actions column */
+.actions-column {
+  min-width: 180px;
+}
+
+/* Alternative approach to increase button spacing if flex isn't working */
+td.actions-cell {
+  min-width: 200px;
+}
+
 /* Header Styles */
 .admin-header {
   background-color: var(--primary-color);
@@ -60,7 +110,7 @@ body {
 }
 
 .app-title {
-  color: white;
+  color: rgb(129, 16, 16);
   font-size: 1.5rem;
   font-weight: 600;
 }
@@ -132,9 +182,25 @@ body {
 }
 
 .section-title {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-  color: var(--text-dark);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.actions-column {
+  width: 180px; /* Increased width to accommodate spaced buttons */
+}
+
+.actions-cell {
+  display: flex;
+  justify-content: center; /* Center-align the buttons */
+  align-items: center; /* Vertically align the buttons */
+  gap: 10px; /* Space between buttons */
+}
+
+.action-button {
+  min-width: 80px; /* Ensure buttons have enough width */
+  padding: 0.5rem 1rem; /* Add padding for better spacing */
+  text-align: center;
 }
 
 .section-description {
@@ -183,6 +249,69 @@ body {
 /* Upload Tab */
 .upload-section {
   max-width: 100%;
+}
+
+.table-header {
+  background-color: var(--bg-white);
+  padding: 4rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Ensure table headers and cells are aligned */
+.quizzes-table {
+  table-layout: fixed; /* Ensures consistent column widths */
+  width: 100%; /* Full width of the table */
+  border-collapse: collapse; /* Remove extra spacing between cells */
+}
+
+.table-header,
+.table-cell {
+  text-align: center; /* Centers the content horizontally */
+  padding: 1rem; /* Adds consistent padding */
+}
+
+.table-header {
+  font-weight: bold;
+}
+
+.table-cell {
+  vertical-align: middle; /* Ensures content is vertically centered */
+}
+
+/* Specific column widths for consistent alignment */
+.table-header:nth-child(1),
+.table-cell:nth-child(1) {
+  width: 40%; /* Title column */
+  text-align: left; /* Align text to the left for better readability */
+}
+
+.table-header:nth-child(2),
+.table-cell:nth-child(2) {
+  width: 15%; /* Questions column */
+}
+
+.table-header:nth-child(3),
+.table-cell:nth-child(3) {
+  width: 20%; /* Created column */
+}
+
+.table-header:nth-child(4),
+.table-cell:nth-child(4) {
+  width: 25%; /* Actions column */
+}
+
+/* Ensure consistent column widths */
+.table-header:nth-child(4),
+.table-cell:nth-child(4) {
+  width: 25%; /* Adjust as needed */
+  text-align: center;
+}
+
+.table-header:nth-child(4) {
+  display: flex;
+  justify-content: center; /* Center-align the header text */
+  align-items: center; /* Vertically align the header text */
+  gap: 10px; /* Match the gap between the buttons */
 }
 
 .upload-area {
@@ -342,3 +471,14 @@ body {
   display: inline-block;
   margin-right: 10px; /* ✅ Space between label and input box */
 }  
+
+@media (max-width: 768px) {
+  .actions-cell {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .action-button {
+    width: 100%;
+  }
+}

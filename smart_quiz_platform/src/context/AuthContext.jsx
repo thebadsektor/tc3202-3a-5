@@ -49,17 +49,33 @@ export function AuthProvider({ children }) {
   }, []);
 
   // ✅ Signup function (creates user & stores in Firestore)
-  const signup = async (email, password, role) => {
+ // In AuthContext.jsx
+// In AuthContext.jsx
+const signup = async (email, password, role, firstName, lastName) => {
+  try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    await setDoc(doc(db, "users", user.uid), { email, role }); // Save user data in Firestore
+    // Make sure firstName and lastName have default values if they're undefined
+    const userData = {
+      email, 
+      role: role || "user",
+      firstName: firstName || "",
+      lastName: lastName || ""
+    };
+
+    // Now set the document with valid data (no undefined values)
+    await setDoc(doc(db, "users", user.uid), userData);
 
     setCurrentUser(user);
-    setRole(role);
+    setRole(userData.role);
 
-    return userCredential; // ✅ Return user data for further processing
-  };
+    return userCredential;
+  } catch (error) {
+    console.error("Error during signup:", error);
+    throw error; // Re-throw to let component handle it
+  }
+};
 
   // ✅ Login function (fetches user role from Firestore)
   const login = async (email, password) => {

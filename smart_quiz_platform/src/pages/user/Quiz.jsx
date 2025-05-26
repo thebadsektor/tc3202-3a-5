@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import axios from 'axios'; // Add axios for ML service calls
+import axios from 'axios';
+import { getAuth } from "firebase/auth";
 import {
   getFirestore,
   doc,
   getDoc,
+  updateDoc,
+  setDoc,
   collection,
   addDoc,
   getDocs,
@@ -49,6 +52,7 @@ export default function Quiz() {
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [loadingNextQuestion, setLoadingNextQuestion] = useState(false); // Loading state for next question
   const [isSubmitting, setIsSubmitting] = useState(false); // New state for submit button loading
+  const [savingResults, setSavingResults] = useState(false); // Added state for saving results
 
   // Difficulty progression
   const [currentDifficulty, setCurrentDifficulty] = useState('medium');
@@ -56,6 +60,9 @@ export default function Quiz() {
 
   // ML Service URL (replace with your actual endpoint)
   const ML_SERVICE_URL = 'http://localhost:5000/predict_difficulty';
+
+  const [showModelViz, setShowModelViz] = useState(false);
+  const [predictionData, setPredictionData] = useState(null);
 
   // Difficulty numeric mapping
   const difficultyNumericMap = {
@@ -177,7 +184,16 @@ export default function Quiz() {
         was_correct: prevCorrect,
         time_taken: timeTaken
       });
-
+  
+      // Store the prediction data for visualization
+      setPredictionData({
+        current: prevDifficulty,
+        prediction: response.data.predicted_difficulty,
+        wasCorrect: prevCorrect,
+        timeTaken: timeTaken
+      });
+      
+      setShowModelViz(true);
       return response.data.predicted_difficulty;
     } catch (error) {
       console.error('ML Difficulty Prediction Error:', error);
@@ -198,6 +214,185 @@ export default function Quiz() {
       }
     }
   }, []);
+
+  // Add this component inside the Quiz component
+// KNN Visualization Component with improved design
+const KNNVisualization = ({ predictionData }) => {
+  if (!predictionData) return null;
+  
+  const difficultyColors = {
+    easy: "#4CAF50",
+    medium: "#FFC107",
+    hard: "#F44336"
+  };
+  
+  const difficultyLabels = {
+    easy: "Easy",
+    medium: "Medium",
+    hard: "Hard"
+  };
+  
+  const { current, prediction, wasCorrect, timeTaken } = predictionData;
+  
+  return (
+    <div style={styles.knnContainer}>
+      <h3 style={styles.knnTitle}>Adaptive Learning Model</h3>
+      
+      <div style={styles.knnStats}>
+        <div style={styles.knnStatItem}>
+          <span style={styles.knnStatLabel}>Current Question:</span>
+          <span style={{
+            ...styles.knnStatValue,
+            color: difficultyColors[current]
+          }}>{difficultyLabels[current]}</span>
+          <span style={{
+            ...styles.knnStatBadge,
+            backgroundColor: wasCorrect ? difficultyColors.easy : difficultyColors.hard
+          }}>
+            {wasCorrect ? "Correct" : "Incorrect"}
+          </span>
+        </div>
+        
+        <div style={styles.knnStatItem}>
+          <span style={styles.knnStatLabel}>Time Taken:</span>
+          <span style={styles.knnStatValue}>{timeTaken} seconds</span>
+        </div>
+        
+        <div style={styles.knnStatItem}>
+          <span style={styles.knnStatLabel}>Next Question:</span>
+          <span style={{
+            ...styles.knnStatValue,
+            color: difficultyColors[prediction],
+            fontWeight: "600"
+          }}>{difficultyLabels[prediction]}</span>
+        </div>
+      </div>
+      
+      <div style={styles.knnVisual}>
+        <svg width="100%" height="220" viewBox="0 0 400 220">
+          {/* Background with grid lines */}
+          <rect x="50" y="30" width="300" height="120" fill="#f9f9f9" stroke="#eaeaea" />
+          
+          {/* Grid lines */}
+          <line x1="50" y1="70" x2="350" y2="70" stroke="#eaeaea" strokeWidth="1" />
+          <line x1="50" y1="110" x2="350" y2="110" stroke="#eaeaea" strokeWidth="1" />
+          <line x1="150" y1="30" x2="150" y2="150" stroke="#eaeaea" strokeWidth="1" />
+          <line x1="250" y1="30" x2="250" y2="150" stroke="#eaeaea" strokeWidth="1" />
+          
+          {/* Y-axis (difficulty) */}
+          <line x1="50" y1="30" x2="50" y2="150" stroke="#555" strokeWidth="1.5" />
+          <text x="25" y="40" fontSize="12" fontWeight="500" textAnchor="middle" fill="#555">Hard</text>
+          <text x="25" y="90" fontSize="12" fontWeight="500" textAnchor="middle" fill="#555">Med</text>
+          <text x="25" y="140" fontSize="12" fontWeight="500" textAnchor="middle" fill="#555">Easy</text>
+          
+          {/* X-axis (time) */}
+          <line x1="50" y1="150" x2="350" y2="150" stroke="#555" strokeWidth="1.5" />
+          <text x="50" y="170" fontSize="11" textAnchor="middle" fill="#555">0s</text>
+          <text x="150" y="170" fontSize="11" textAnchor="middle" fill="#555">20s</text>
+          <text x="250" y="170" fontSize="11" textAnchor="middle" fill="#555">40s</text>
+          <text x="350" y="170" fontSize="11" textAnchor="middle" fill="#555">60s</text>
+          <text x="200" y="190" fontSize="12" fontWeight="500" textAnchor="middle" fill="#555">Response Time</text>
+          
+          {/* KNN neighbor points - more strategic placement */}
+          {/* Easy points cluster */}
+          <circle cx={90} cy={135} r="4" fill="#90CAF9" opacity="0.6" />
+          <circle cx={110} cy={138} r="4" fill="#90CAF9" opacity="0.6" />
+          <circle cx={130} cy={130} r="4" fill="#90CAF9" opacity="0.6" />
+          
+          {/* Medium points cluster */}
+          <circle cx={180} cy={85} r="4" fill="#90CAF9" opacity="0.6" />
+          <circle cx={200} cy={95} r="4" fill="#90CAF9" opacity="0.6" />
+          <circle cx={220} cy={82} r="4" fill="#90CAF9" opacity="0.6" />
+          
+          {/* Hard points cluster */}
+          <circle cx={260} cy={45} r="4" fill="#90CAF9" opacity="0.6" />
+          <circle cx={280} cy={38} r="4" fill="#90CAF9" opacity="0.6" />
+          <circle cx={300} cy={50} r="4" fill="#90CAF9" opacity="0.6" />
+          
+          {/* Decision boundary visualization - more elegant curve */}
+          <path 
+            d={`M50,${prediction === 'hard' ? 60 : prediction === 'medium' ? 100 : 130} 
+                 C120,${prediction === 'hard' ? 40 : prediction === 'medium' ? 80 : 120} 
+                 280,${prediction === 'hard' ? 40 : prediction === 'medium' ? 80 : 120}
+                 350,${prediction === 'hard' ? 60 : prediction === 'medium' ? 100 : 130}`} 
+            stroke={difficultyColors[prediction]} 
+            strokeWidth="2" 
+            fill="none" 
+            strokeDasharray="3,3"
+          />
+          
+          {/* Current data point (user answer) */}
+          <circle 
+            cx={50 + (timeTaken/60) * 300} 
+            cy={current === 'easy' ? 140 : current === 'medium' ? 90 : 40}
+            r="8" 
+            fill={wasCorrect ? difficultyColors.easy : difficultyColors.hard}
+            stroke="#fff"
+            strokeWidth="2" 
+          />
+          
+          {/* Target prediction point with pulse animation */}
+          <circle 
+            cx={200} 
+            cy={prediction === 'easy' ? 140 : prediction === 'medium' ? 90 : 40}
+            r="10" 
+            fill={difficultyColors[prediction]} 
+            stroke="#fff"
+            strokeWidth="2"
+            opacity="0.8"
+          >
+            <animate 
+              attributeName="r" 
+              values="8;12;8" 
+              dur="2s" 
+              repeatCount="indefinite" 
+            />
+          </circle>
+          
+          {/* Label for current point */}
+          <text 
+            x={50 + (timeTaken/60) * 300} 
+            y={current === 'easy' ? 155 : current === 'medium' ? 75 : 25}
+            fontSize="11" 
+            textAnchor="middle"
+            fontWeight="500"
+            fill="#333"
+          >
+            Current
+          </text>
+          
+          {/* Label for prediction point */}
+          <text 
+            x={200} 
+            y={prediction === 'easy' ? 155 : prediction === 'medium' ? 75 : 25}
+            fontSize="11" 
+            textAnchor="middle"
+            fontWeight="500"
+            fill="#333"
+          >
+            Next
+          </text>
+          
+          {/* Legend */}
+          <rect x="260" y="30" width="85" height="60" fill="white" stroke="#eaeaea" strokeWidth="1" rx="3" />
+          <circle cx="270" y="45" r="4" fill={difficultyColors.easy} />
+          <text x="280" y="48" fontSize="10" fill="#333">Correct</text>
+          <circle cx="270" y="60" r="4" fill={difficultyColors.hard} />
+          <text x="280" y="63" fontSize="10" fill="#333">Incorrect</text>
+          <circle cx="270" y="75" r="4" fill="#90CAF9" />
+          <text x="280" y="78" fontSize="10" fill="#333">KNN Points</text>
+        </svg>
+      </div>
+      
+      <div style={styles.knnExplanation}>
+        <p style={styles.knnExplanationText}>
+          <span style={styles.knnHighlight}>How it works:</span> The system analyzes your performance and response time 
+          to adjust question difficulty for optimal learning.
+        </p>
+      </div>
+    </div>
+  );
+};
 
   // Handle time up
   const handleTimeUp = () => {
@@ -289,18 +484,19 @@ export default function Quiz() {
       completeQuiz([...userAnswers]);
       return;
     }
-
+  
     // Verify next question is loaded before proceeding
     if (!nextQuestion) {
       console.error("Next question not loaded yet");
       return;
     }
-
+  
     // Reset state for next question
     setTimeLeft(TIME_PER_QUESTION);
     setSelectedAnswer(null);
     setShowFeedback(false);
     setIsAnswerSubmitted(false);
+    setShowModelViz(false); // Reset KNN visualization
     
     // Move to next question index
     const nextIndex = currentIndex + 1;
@@ -315,14 +511,292 @@ export default function Quiz() {
     setNextDifficulty(null);
   };
 
-  // Complete quiz
-  const completeQuiz = (finalAnswers) => {
-    const correctAnswers = finalAnswers.filter(ans => ans.isCorrect);
-    const finalScore = (correctAnswers.length / finalAnswers.length) * 100;
+  // Save quiz results to Firestore with retry mechanism and additional analytics
+// Enhanced saveQuizResults function with better error handling and logging
+const saveQuizResults = async (finalAnswers, finalScore) => {
+  try {
+    setSavingResults(true);
+    setError(null); // Clear any previous errors
     
-    setScore(finalScore);
-    setQuizCompleted(true);
-    setLoading(false); // Ensure loading is false when quiz is completed
+    console.log("Starting to save quiz results to Firestore...");
+    
+    // Enhanced authentication check
+    if (!user) {
+      console.error("No user found in AuthContext");
+      
+      // Check if we can get the user from Firebase Auth directly
+      const currentUser = getAuth().currentUser;
+      
+      if (!currentUser) {
+        console.error("No authenticated user found in Firebase Auth either");
+        setError("Authentication error: Please login again before submitting quiz results");
+        return { success: false, error: "No authenticated user found" };
+      }
+      
+      console.log("Retrieved user from Firebase Auth:", currentUser.uid);
+      // Use the current user from Firebase Auth instead
+      var userId = currentUser.uid;
+      var userEmail = currentUser.email;
+      var userName = currentUser.displayName || currentUser.email;
+    } else {
+      // Use user from context if available
+      var userId = user.uid;
+      var userEmail = user.email;
+      var userName = user.displayName || user.email;
+    }
+    
+    console.log("User ID:", userId);
+    console.log("Quiz ID:", quizId);
+
+    // Calculate basic statistics
+    const totalQuestions = finalAnswers.length;
+    const correctAnswers = finalAnswers.filter(ans => ans.isCorrect).length;
+    const incorrectAnswers = totalQuestions - correctAnswers;
+    
+    // Calculate difficulty distribution
+    const difficultyDistribution = {
+      easy: finalAnswers.filter(ans => ans.difficulty === 'easy').length,
+      medium: finalAnswers.filter(ans => ans.difficulty === 'medium').length,
+      hard: finalAnswers.filter(ans => ans.difficulty === 'hard').length
+    };
+
+    // Calculate average time per question
+    const totalTime = finalAnswers.reduce((sum, ans) => sum + ans.timeTaken, 0);
+    const avgTime = totalTime / totalQuestions;
+
+    // Calculate performance by difficulty level
+    const performanceByDifficulty = {
+      easy: {
+        total: difficultyDistribution.easy,
+        correct: finalAnswers.filter(ans => ans.difficulty === 'easy' && ans.isCorrect).length,
+        avgTime: finalAnswers.filter(ans => ans.difficulty === 'easy').reduce((sum, ans) => sum + ans.timeTaken, 0) / 
+                (difficultyDistribution.easy || 1) // Avoid division by zero
+      },
+      medium: {
+        total: difficultyDistribution.medium,
+        correct: finalAnswers.filter(ans => ans.difficulty === 'medium' && ans.isCorrect).length,
+        avgTime: finalAnswers.filter(ans => ans.difficulty === 'medium').reduce((sum, ans) => sum + ans.timeTaken, 0) / 
+                (difficultyDistribution.medium || 1)
+      },
+      hard: {
+        total: difficultyDistribution.hard,
+        correct: finalAnswers.filter(ans => ans.difficulty === 'hard' && ans.isCorrect).length,
+        avgTime: finalAnswers.filter(ans => ans.difficulty === 'hard').reduce((sum, ans) => sum + ans.timeTaken, 0) / 
+                (difficultyDistribution.hard || 1)
+      }
+    };
+
+    // Track adaptive learning patterns
+    const difficultyTransitions = [];
+    for (let i = 1; i < finalAnswers.length; i++) {
+      difficultyTransitions.push({
+        from: finalAnswers[i-1].difficulty,
+        to: finalAnswers[i].difficulty,
+        afterCorrect: finalAnswers[i-1].isCorrect
+      });
+    }
+
+    // Create enhanced results document
+    const resultsData = {
+      // User information
+      userId,
+      userName,
+      userEmail,
+      
+      // Quiz information
+      quizId,
+      quizTitle,
+      
+      // Score information
+      score: finalScore,
+      totalQuestions,
+      correctAnswers,
+      incorrectAnswers,
+      
+      // Detailed analytics
+      difficultyDistribution,
+      performanceByDifficulty,
+      difficultyTransitions,
+      averageTimePerQuestion: avgTime,
+      timeDistribution: {
+        under10s: finalAnswers.filter(ans => ans.timeTaken < 10).length,
+        under30s: finalAnswers.filter(ans => ans.timeTaken >= 10 && ans.timeTaken < 30).length,
+        under60s: finalAnswers.filter(ans => ans.timeTaken >= 30 && ans.timeTaken < 60).length,
+        timeout: finalAnswers.filter(ans => ans.timedOut).length
+      },
+      
+      // Raw answer data
+      answersDetail: finalAnswers,
+      
+      // Metadata
+      completedAt: serverTimestamp(),
+      deviceInfo: {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language
+      }
+    };
+
+    console.log("Results data prepared:", JSON.stringify(resultsData, null, 2));
+
+    // Implement retry logic for Firestore save
+    const MAX_RETRIES = 3;
+    let attempt = 0;
+    let saveSuccessful = false;
+    let lastError = null;
+
+    while (attempt < MAX_RETRIES && !saveSuccessful) {
+      try {
+        attempt++;
+        console.log(`Attempt ${attempt} to save quiz results to Firestore...`);
+        
+        // Get a reference to the Firestore database
+        if (!db) {
+          console.error("Firestore database reference is undefined, initializing again");
+          const newDb = getFirestore();
+          if (!newDb) {
+            throw new Error("Failed to initialize Firestore database");
+          }
+          db = newDb; // Update the reference
+        }
+        
+        // Save to Firestore main results collection
+        const resultsRef = collection(db, "quizResults");
+        console.log("Collection reference created:", resultsRef);
+        
+        // Add the document to Firestore
+        console.log("Calling addDoc...");
+        const docRef = await addDoc(resultsRef, resultsData);
+        console.log("Document added with ID:", docRef.id);
+        
+        // Store the reference ID for potential future updates
+        const resultId = docRef.id;
+        
+        // Update user profile with quiz history (in user subcollection)
+        console.log("Creating user quiz history entry...");
+        const userQuizHistoryRef = collection(db, "users", userId, "quizHistory");
+        await addDoc(userQuizHistoryRef, {
+          resultId, // Reference to the full results
+          quizId,
+          quizTitle,
+          score: finalScore,
+          difficultyDistribution,
+          completedAt: serverTimestamp()
+        });
+        console.log("User quiz history entry added.");
+
+        // Also update the quiz's aggregate statistics (optional)
+        try {
+          console.log("Updating quiz statistics...");
+          const quizStatsRef = doc(db, "quizStatistics", quizId);
+          const quizStatsDoc = await getDoc(quizStatsRef);
+          
+          if (quizStatsDoc.exists()) {
+            // Update existing stats
+            console.log("Updating existing quiz statistics...");
+            const statsData = quizStatsDoc.data();
+            const totalAttempts = (statsData.totalAttempts || 0) + 1;
+            const totalScore = (statsData.totalScore || 0) + finalScore;
+            
+            await updateDoc(quizStatsRef, {
+              totalAttempts,
+              averageScore: totalScore / totalAttempts,
+              lastAttemptAt: serverTimestamp()
+            });
+            console.log("Quiz statistics updated.");
+          } else {
+            // Create new stats document
+            console.log("Creating new quiz statistics document...");
+            await setDoc(quizStatsRef, {
+              quizId,
+              quizTitle,
+              totalAttempts: 1,
+              averageScore: finalScore,
+              createdAt: serverTimestamp(),
+              lastAttemptAt: serverTimestamp()
+            });
+            console.log("New quiz statistics created.");
+          }
+        } catch (statsError) {
+          console.warn("Error updating quiz statistics:", statsError);
+          // Non-critical, continue execution
+        }
+        
+        saveSuccessful = true;
+        console.log("Quiz results successfully saved to Firestore!");
+      } catch (saveError) {
+        console.error(`Save attempt ${attempt} failed:`, saveError);
+        lastError = saveError;
+        
+        // If there's a Firebase-specific error code, log it
+        if (saveError.code) {
+          console.error(`Firebase error code: ${saveError.code}`);
+        }
+        
+        // Check for permissions error and provide helpful message
+        if (saveError.code === 'permission-denied') {
+          setError("Permission denied: Your account doesn't have permission to save quiz results");
+          return { success: false, error: "Permission denied" };
+        }
+        
+        // Exponential backoff before retry (300ms, 900ms, 2700ms)
+        if (attempt < MAX_RETRIES) {
+          const backoffTime = Math.pow(3, attempt - 1) * 300;
+          console.log(`Retrying in ${backoffTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffTime));
+        }
+      }
+    }
+
+    if (!saveSuccessful) {
+      throw new Error(`Failed to save after ${MAX_RETRIES} attempts: ${lastError.message}`);
+    }
+
+    console.log("Quiz results save process completed successfully");
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving quiz results:", error);
+    // Log detailed error information
+    if (error.code) {
+      console.error("Firebase error code:", error.code);
+    }
+    if (error.message) {
+      console.error("Error message:", error.message);
+    }
+    
+    setError(`Failed to save results: ${error.message}. Please try again or contact support.`);
+    return { success: false, error: error.message };
+  } finally {
+    setSavingResults(false);
+  }
+};
+
+  // Complete quiz
+  const completeQuiz = async (finalAnswers) => {
+    try {
+      const correctAnswers = finalAnswers.filter(ans => ans.isCorrect);
+      const finalScore = (correctAnswers.length / finalAnswers.length) * 100;
+      
+      setScore(finalScore);
+      console.log("Quiz completed with score:", finalScore);
+      
+      // Save results to Firestore
+      console.log("Attempting to save quiz results to Firestore...");
+      const saveResult = await saveQuizResults(finalAnswers, finalScore);
+      
+      if (saveResult.success) {
+        console.log("Quiz results saved successfully to Firestore");
+      } else {
+        console.error("Failed to save quiz results:", saveResult.error);
+        setError(`Failed to save results: ${saveResult.error || "Unknown error"}. Your score was calculated, but results may not be saved.`);
+      }
+    } catch (error) {
+      console.error("Error in completeQuiz function:", error);
+      setError("An unexpected error occurred. Your score was calculated, but results may not be saved.");
+    } finally {
+      setQuizCompleted(true);
+      setLoading(false); // Ensure loading is false when quiz is completed
+    }
   };
 
   // SVG Text Generator Components
@@ -426,20 +900,71 @@ export default function Quiz() {
       textColor = "#721c24";
     }
     
+    // Create a ref to the option text for measuring
+    const textRef = useRef(null);
+    // State to track the text height
+    const [textHeight, setTextHeight] = useState(50);
+    
+    // Calculate text wrap and height
+    const calculateTextHeight = useCallback(() => {
+      // Estimate roughly 16px per line and ~50 chars per line at 700px width
+      const charsPerLine = 50;
+      const lines = Math.ceil(option.length / charsPerLine);
+      const estimatedHeight = Math.max(50, lines * 20); // Minimum 50px, 20px per line
+      setTextHeight(estimatedHeight);
+    }, [option]);
+    
+    // Calculate height on mount and when option changes
+    useEffect(() => {
+      calculateTextHeight();
+    }, [option, calculateTextHeight]);
+    
+    // Function to wrap text for SVG
+    const wrapText = (text, maxWidth = 670) => {
+      // Estimate about 10 pixels per character for our font
+      const charsPerLine = Math.floor(maxWidth / 10);
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = '';
+      
+      words.forEach(word => {
+        if ((currentLine + word).length > charsPerLine) {
+          lines.push(currentLine);
+          currentLine = word + ' ';
+        } else {
+          currentLine += word + ' ';
+        }
+      });
+      
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      
+      return lines;
+    };
+    
+    // Get wrapped lines
+    const lines = wrapText(option);
+    
+    // Calculate the actual height needed for SVG
+    const svgHeight = Math.max(50, lines.length * 20); // 20px for each line
+    
     return (
       <div 
         style={{
           ...styles.optionContainer,
           backgroundColor,
           borderColor,
+          minHeight: svgHeight + 20, // Add 20px padding (10px top + 10px bottom)
         }}
         onClick={onClick}
       >
         <svg 
           width="100%" 
-          height="50"
-          viewBox="0 0 700 50"
+          height={svgHeight}
+          viewBox={`0 0 700 ${svgHeight}`}
           style={{ userSelect: 'none', pointerEvents: 'none' }}
+          ref={textRef}
         >
           <defs>
             <filter id="noiseFilter2" x="0" y="0" width="100%" height="100%">
@@ -447,17 +972,20 @@ export default function Quiz() {
               <feDisplacementMap in="SourceGraphic" in2="noise" scale="1" />
             </filter>
           </defs>
-          <text
-            x="15"
-            y="30"
-            fontFamily="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-            fontSize="16"
-            fontWeight="normal"
-            fill={textColor}
-            filter="url(#noiseFilter2)"
-          >
-            {option}
-          </text>
+          {lines.map((line, i) => (
+            <text
+              key={i}
+              x="15"
+              y={20 + i * 20} // 20px line height
+              fontFamily="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+              fontSize="16"
+              fontWeight="normal"
+              fill={textColor}
+              filter="url(#noiseFilter2)"
+            >
+              {line}
+            </text>
+          ))}
         </svg>
       </div>
     );
@@ -476,6 +1004,13 @@ export default function Quiz() {
             <div>Total Questions: {userAnswers.length}</div>
             <div>Correct Answers: {userAnswers.filter(ans => ans.isCorrect).length}</div>
             <div>Incorrect Answers: {userAnswers.filter(ans => !ans.isCorrect).length}</div>
+          </div>
+          <div style={styles.saveStatus}>
+            {error ? (
+              <p style={styles.saveError}>{error}</p>
+            ) : (
+              <p style={styles.saveSuccess}>Results saved successfully!</p>
+            )}
           </div>
           <button 
             style={styles.finishButton} 
@@ -543,11 +1078,18 @@ export default function Quiz() {
       </div>
 
       <div style={styles.questionCard}>
-        <div style={styles.difficultyBadge}>
-        <div style={{ fontSize: "20px" }}>
-          Difficulty: {currentDifficulty.toUpperCase()}
-          </div>
-        </div>
+      <div style={styles.difficultyBadge}>
+      <div style={{ fontSize: "20px" }}>
+        Difficulty: {' '}
+        <span style={{ 
+          color: currentDifficulty === 'easy' ? '#4CAF50' : 
+                currentDifficulty === 'medium' ? '#FFC107' : 
+                '#F44336'
+        }}>
+          {currentDifficulty.toUpperCase()}
+        </span>
+      </div>
+    </div>
 
         {/* Question text as SVG */}
         <div style={styles.questionText}>
@@ -593,46 +1135,52 @@ export default function Quiz() {
             </button>
           </div>
         ) : (
-          <div style={styles.feedbackContainer}>
-            {showFeedback ? (
-              <>
-                {selectedAnswer === currentQuestion.correct_answer ? (
-                  <div style={styles.correctFeedback}>Correct! Good job!</div>
-                ) : (
-                  <div style={styles.incorrectFeedback}>
-                    <p>Incorrect.</p>
-                    <div style={styles.correctAnswerContainer}>
-                      <p>The correct answer is:</p>
-                      <div style={styles.correctAnswerText}>
-                        <TextAsSVG 
-                          text={currentQuestion.correct_answer} 
-                          fontSize={16} 
-                          fontWeight="bold"
-                          width={600}
-                          textAlign="center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <button 
-                  style={{
-                    ...styles.nextButton,
-                    opacity: loadingNextQuestion ? 0.6 : 1,
-                    cursor: loadingNextQuestion ? 'not-allowed' : 'pointer'
-                  }}
-                  onClick={handleNextQuestion}
-                  disabled={loadingNextQuestion || !nextQuestion}
-                >
-                  {loadingNextQuestion ? 'Loading Next Question...' : 'Next Question'}
-                </button>
-              </>
-            ) : (
-              <div style={styles.loadingFeedback}>
-                Loading result...
+              <div style={styles.feedbackContainer}>
+      {showFeedback ? (
+        <>
+          {selectedAnswer === currentQuestion.correct_answer ? (
+            <div style={styles.correctFeedback}>Correct! Good job!</div>
+          ) : (
+            <div style={styles.incorrectFeedback}>
+              <p>Incorrect.</p>
+              <div style={styles.correctAnswerContainer}>
+                <p>The correct answer is:</p>
+                <div style={styles.correctAnswerText}>
+                  <TextAsSVG 
+                    text={currentQuestion.correct_answer} 
+                    fontSize={16} 
+                    fontWeight="bold"
+                    width={600}
+                    textAlign="center"
+                  />
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+          
+          {/* Add KNN Visualization here */}
+          {showModelViz && predictionData && (
+            <KNNVisualization predictionData={predictionData} />
+          )}
+          
+          <button 
+            style={{
+              ...styles.nextButton,
+              opacity: loadingNextQuestion ? 0.6 : 1,
+              cursor: loadingNextQuestion ? 'not-allowed' : 'pointer'
+            }}
+            onClick={handleNextQuestion}
+            disabled={loadingNextQuestion || !nextQuestion}
+          >
+            {loadingNextQuestion ? 'Loading Next Question...' : 'Next Question'}
+          </button>
+        </>
+      ) : (
+        <div style={styles.loadingFeedback}>
+          Loading result...
+        </div>
+      )}
+    </div>
         )}
       </div>
     </div>
@@ -699,9 +1247,11 @@ const styles = {
     cursor: "pointer",
     transition: "all 0.2s ease",
     position: "relative",
-    minHeight: "50px",
+    minHeight: "50px", // This is now a minimum height, actual height will adjust based on content
     display: "flex",
     alignItems: "center",
+    overflow: "hidden", // Prevent overflow of SVG content
+    width: "100%",     // Ensure full width
   },
   actionContainer: {
     display: "flex",
@@ -800,6 +1350,23 @@ const styles = {
     justifyContent: "space-around",
     marginBottom: "20px",
   },
+  saveStatus: {
+    margin: "10px 0",
+    padding: "10px",
+    borderRadius: "5px",
+  },
+  saveSuccess: {
+    color: "#155724",
+    backgroundColor: "#d4edda",
+    padding: "10px",
+    borderRadius: "5px",
+  },
+  saveError: {
+    color: "#721c24",
+    backgroundColor: "#f8d7da",
+    padding: "10px",
+    borderRadius: "5px",
+  },
   finishButton: {
     backgroundColor: "#3a56e4",
     color: "white",
@@ -840,6 +1407,78 @@ const styles = {
     fontSize: "32px", // Adjust size as needed
     fontWeight: "bold",
     textAlign: "center",
-  }
+  },
+  knnContainer: {
+    marginTop: "20px",
+    backgroundColor: "white",
+    borderRadius: "12px",
+    padding: "20px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+    overflow: "hidden",
+  },
+  knnTitle: {
+    fontSize: "18px",
+    fontWeight: "600",
+    color: "#333",
+    marginTop: 0,
+    marginBottom: "16px",
+    textAlign: "center",
+  },
+  knnStats: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginBottom: "15px",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    backgroundColor: "#f9f9f9",
+  },
+  knnStatItem: {
+    display: "flex",
+    alignItems: "center",
+    marginRight: "10px",
+    marginBottom: "5px",
+  },
+  knnStatLabel: {
+    fontSize: "13px",
+    color: "#555",
+    marginRight: "6px",
+  },
+  knnStatValue: {
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#333",
+  },
+  knnStatBadge: {
+    fontSize: "11px",
+    fontWeight: "500",
+    color: "white",
+    padding: "2px 8px",
+    borderRadius: "12px",
+    marginLeft: "8px",
+  },
+  knnVisual: {
+    borderRadius: "8px",
+    padding: "5px",
+    marginBottom: "15px",
+    backgroundColor: "white",
+    border: "1px solid #eaeaea",
+  },
+  knnExplanation: {
+    fontSize: "13px",
+    color: "#666",
+    backgroundColor: "#f5f7fa",
+    borderRadius: "6px",
+    padding: "10px 15px",
+  },
+  knnExplanationText: {
+    margin: "0",
+    lineHeight: "1.5",
+  },
+  knnHighlight: {
+    fontWeight: "600",
+    color: "#1976D2",
+  },  
 
 };

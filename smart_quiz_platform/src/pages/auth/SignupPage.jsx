@@ -14,11 +14,57 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [nameError, setNameError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Name validation function - only allows letters
+  const validateName = (name) => {
+    if (name.length === 0) return true; // Allow empty field (validation will happen on submit)
+    const nameRegex = /^[A-Za-z]+$/;
+    return nameRegex.test(name);
+  };
+
+  // Handle first name input with validation and auto-uppercase
+  const handleFirstNameChange = (e) => {
+    const value = e.target.value;
+    
+    if (validateName(value)) {
+      setFirstName(value.toUpperCase());
+      setNameError("");
+    } else {
+      // Don't update the state with invalid input
+      setNameError("Names can only contain letters (A-Z)");
+    }
+  };
+
+  // Handle last name input with validation and auto-uppercase
+  const handleLastNameChange = (e) => {
+    const value = e.target.value;
+    
+    if (validateName(value)) {
+      setLastName(value.toUpperCase());
+      setNameError("");
+    } else {
+      // Don't update the state with invalid input
+      setNameError("Names can only contain letters (A-Z)");
+    }
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
+    setNameError("");
+
+    // Final validation before submission
+    if (firstName.length === 0 || lastName.length === 0) {
+      setNameError("First name and last name are required.");
+      return;
+    }
+
+    if (!validateName(firstName) || !validateName(lastName)) {
+      setNameError("Names can only contain letters (A-Z)");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -27,7 +73,8 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const userCredential = await signup(email, password, "user");
+      const userCredential = await signup(email, password, "user", firstName, lastName);
+
       const user = userCredential.user;
 
       // Store user details in Firestore
@@ -54,13 +101,14 @@ export default function SignupPage() {
         </div>
 
         {error && <div className="auth-error">{error}</div>}
+        {nameError && <div className="auth-error">{nameError}</div>}
 
         <form className="auth-form" onSubmit={handleSignup}>
           <input
             type="text"
             placeholder="First Name"
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            onChange={handleFirstNameChange}
             required
             disabled={loading}
           />
@@ -69,7 +117,7 @@ export default function SignupPage() {
             type="text"
             placeholder="Last Name"
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            onChange={handleLastNameChange}
             required
             disabled={loading}
           />

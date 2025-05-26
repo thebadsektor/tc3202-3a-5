@@ -1,70 +1,101 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
+import Lugo from "/src/assets/jaibot-logo.png";
+import "./overview.css";
 
-export default function GetStartedPage() {
+export default function LandingPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [activeSection, setActiveSection] = useState(0);
-
+  
   // Features data for the carousel
   const features = [
     {
       title: "Adaptive Learning",
       icon: "🧠",
-      description: "Our KNN algorithm adapts quiz difficulty based on your performance, making your learning experience personalized and more effective."
+      description:
+        "Our KNN algorithm adapts quiz difficulty based on your performance, making your learning experience personalized and more effective.",
     },
     {
       title: "Performance Analytics",
       icon: "📊",
-      description: "Track your progress with detailed statistics and visualizations. Identify your strengths and areas that need improvement."
+      description:
+        "Track your progress with detailed statistics and visualizations. Identify your strengths and areas that need improvement.",
     },
     {
       title: "Smart Recommendations",
       icon: "🎯",
-      description: "Receive quiz recommendations based on your learning patterns and areas where you need the most practice."
+      description:
+        "Receive quiz recommendations based on your learning patterns and areas where you need the most practice.",
     },
     {
       title: "Diverse Quiz Library",
       icon: "📚",
-      description: "Access a wide range of subjects from Mathematics and Science to Literature, History, and Computer Science."
-    }
+      description:
+        "Access a wide range of subjects from Mathematics and Science to Literature, History, and Computer Science.",
+    },
   ];
+
+  // Set up automatic slideshow with useEffect
+  useEffect(() => {
+    const slideInterval = setInterval(() => {
+      setActiveSection((prev) => (prev + 1) % features.length);
+    }, 5000); // Change slide every 5 seconds
+    
+    // Clean up the interval when component unmounts
+    return () => clearInterval(slideInterval);
+  }, [features.length]);
 
   // Tutorial steps
   const tutorialSteps = [
     {
       title: "Choose a Quiz",
-      description: "Browse our extensive collection of quizzes organized by subject or try our recommended quizzes tailored to your learning needs.",
-      icon: "🔍"
+      description:
+        "Browse our extensive collection of quizzes organized by subject or try our recommended quizzes tailored to your learning needs.",
+      icon: "🔍",
     },
     {
       title: "Take the Quiz",
-      description: "Answer questions at your own pace. The system adapts to your knowledge level, providing appropriate challenges.",
-      icon: "✏️"
+      description:
+        "Answer questions at your own pace. The system adapts to your knowledge level, providing appropriate challenges.",
+      icon: "✏️",
     },
     {
       title: "Review Your Results",
-      description: "Get immediate feedback on your performance with detailed explanations for each question.",
-      icon: "📝"
+      description:
+        "Get immediate feedback on your performance with detailed explanations for each question.",
+      icon: "📝",
     },
     {
       title: "Track Your Progress",
-      description: "Visit your learning profile to see detailed statistics and track your improvement over time.",
-      icon: "📈"
-    }
+      description:
+        "Visit your learning profile to see detailed statistics and track your improvement over time.",
+      icon: "📈",
+    },
   ];
 
-  // Navigate to appropriate page
+  // Navigate to appropriate page based on user role
   const handleGetStarted = () => {
-    if (user) {
-      navigate('/home');
+    if (currentUser) {
+      const userRole = currentUser.role || "user"; // Default to user if role is not defined
+      navigate(userRole === "admin" ? "/admin" : "/user");
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   };
+  
+  // Navigate directly to signup page - updated to use navigate
+  const navigateToSignup = () => {
+    navigate("/signup");
+  };
 
-  // Change active feature in carousel
+  // Navigate to login page
+  const navigateToLogin = () => {
+    navigate("/login");
+  };
+
+  // Manual navigation functions (kept for manual control alongside automatic)
   const nextFeature = () => {
     setActiveSection((prev) => (prev + 1) % features.length);
   };
@@ -74,23 +105,33 @@ export default function GetStartedPage() {
   };
 
   return (
-    <div className="get-started-container">
-      <header className="get-started-header">
+    <div className="landing-container">
+      <header className="landing-header">
         <div className="logo-container">
-          <div className="logo">📚</div>
+          <div className="logo">
+            <img src={Lugo} alt="JAIBOT Logo" className="logo-image" />
+          </div>
           <h1 className="app-title">JAIBOT Quiz</h1>
         </div>
         <div className="nav-buttons">
-          {user ? (
-            <button className="nav-button" onClick={() => navigate('/home')}>
+          {currentUser ? (
+            <button
+              className="nav-button"
+              onClick={() =>
+                navigate(currentUser.role === "admin" ? "/admin" : "/user")
+              }
+            >
               Dashboard
             </button>
           ) : (
             <>
-              <button className="nav-button" onClick={() => navigate('/login')}>
+              <button className="nav-button" onClick={navigateToLogin}>
                 Login
               </button>
-              <button className="primary-button" onClick={() => navigate('/signup')}>
+              <button
+                className="primary-button"
+                onClick={navigateToSignup}
+              >
                 Sign Up
               </button>
             </>
@@ -103,12 +144,12 @@ export default function GetStartedPage() {
           <div className="hero-content">
             <h1 className="hero-title">Smart Learning for the AI Age</h1>
             <p className="hero-subtitle">
-              JAIBOT Quiz is an intelligent, adaptive learning platform that evolves with you.
-              Using machine learning algorithms, we create a personalized learning experience
-              that targets your specific needs.
+              JAIBOT Quiz is an intelligent, adaptive learning platform that
+              evolves with you. Using machine learning algorithms, we create a
+              personalized learning experience that targets your specific needs.
             </p>
             <button className="cta-button" onClick={handleGetStarted}>
-              {user ? 'Go to Dashboard' : 'Get Started for Free'}
+              {currentUser ? "Go to Dashboard" : "Get Started for Free"}
             </button>
           </div>
           <div className="hero-image">
@@ -121,12 +162,15 @@ export default function GetStartedPage() {
         <section className="features-section">
           <h2 className="section-title">Why Choose JAIBOT Quiz?</h2>
           <div className="features-carousel">
-            <button className="carousel-arrow carousel-prev" onClick={prevFeature}>
+            <button
+              className="carousel-arrow carousel-prev"
+              onClick={prevFeature}
+            >
               ←
             </button>
             <div className="feature-cards-container">
-              <div 
-                className="feature-cards" 
+              <div
+                className="feature-cards"
                 style={{ transform: `translateX(-${activeSection * 100}%)` }}
               >
                 {features.map((feature, index) => (
@@ -138,15 +182,20 @@ export default function GetStartedPage() {
                 ))}
               </div>
             </div>
-            <button className="carousel-arrow carousel-next" onClick={nextFeature}>
+            <button
+              className="carousel-arrow carousel-next"
+              onClick={nextFeature}
+            >
               →
             </button>
           </div>
           <div className="carousel-indicators">
             {features.map((_, index) => (
-              <button 
-                key={index} 
-                className={`indicator ${activeSection === index ? 'active' : ''}`}
+              <button
+                key={index}
+                className={`indicator ${
+                  activeSection === index ? "active" : ""
+                }`}
                 onClick={() => setActiveSection(index)}
               />
             ))}
@@ -165,104 +214,33 @@ export default function GetStartedPage() {
               </div>
             ))}
           </div>
-        </section>
-
-        <section className="testimonials-section">
-          <h2 className="section-title">What Our Users Say</h2>
-          <div className="testimonials-grid">
-            <div className="testimonial-card">
-              <div className="quote-icon">❝</div>
-              <p className="testimonial-text">
-                The adaptive learning system helped me identify and focus on my weak areas in mathematics. 
-                My test scores improved significantly after just a few weeks!
-              </p>
-              <div className="testimonial-author">
-                <div className="author-avatar">👨‍🎓</div>
-                <div className="author-details">
-                  <p className="author-name">Michael Chen</p>
-                  <p className="author-title">College Student</p>
-                </div>
-              </div>
-            </div>
-            <div className="testimonial-card">
-              <div className="quote-icon">❝</div>
-              <p className="testimonial-text">
-                As a teacher, I appreciate how the platform adapts to each student's needs, 
-                making it easier to provide personalized support in my classroom.
-              </p>
-              <div className="testimonial-author">
-                <div className="author-avatar">👩‍🏫</div>
-                <div className="author-details">
-                  <p className="author-name">Sarah Johnson</p>
-                  <p className="author-title">High School Teacher</p>
-                </div>
-              </div>
-            </div>
-            <div className="testimonial-card">
-              <div className="quote-icon">❝</div>
-              <p className="testimonial-text">
-                I was preparing for my certification exams and the recommendations 
-                feature helped me focus on exactly what I needed to study.
-              </p>
-              <div className="testimonial-author">
-                <div className="author-avatar">👨‍💼</div>
-                <div className="author-details">
-                  <p className="author-name">David Wilson</p>
-                  <p className="author-title">IT Professional</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        </section>    
 
         <section className="cta-section">
           <div className="cta-content">
-            <h2 className="cta-title">Ready to Transform Your Learning Experience?</h2>
+            <h2 className="cta-title">
+              Ready to Transform Your Learning Experience?
+            </h2>
             <p className="cta-description">
-              Join thousands of learners who have improved their knowledge and skills with our AI-powered quiz platform.
+              Join thousands of learners who have improved their knowledge and
+              skills with our AI-powered quiz platform.
             </p>
-            <button className="cta-button" onClick={handleGetStarted}>
-              {user ? 'Go to Dashboard' : 'Start Learning Now'}
+            <button className="cta-button" onClick={currentUser ? handleGetStarted : navigateToSignup}>
+              {currentUser ? "Go to Dashboard" : "Start Learning Now"}
             </button>
           </div>
         </section>
       </main>
 
-      <footer className="get-started-footer">
+      <footer className="landing-footer">
         <div className="footer-content">
           <div className="footer-logo">
-            <div className="logo">📚</div>
+            <div className="logo">
+            <img src={Lugo} alt="JAIBOT Logo" className="logo-image" />
+            </div>
             <h2 className="footer-title">JAIBOT Quiz</h2>
           </div>
-          <div className="footer-links">
-            <div className="footer-column">
-              <h3 className="footer-heading">Product</h3>
-              <ul>
-                <li><a href="#">Features</a></li>
-                <li><a href="#">How It Works</a></li>
-                <li><a href="#">Pricing</a></li>
-                <li><a href="#">FAQ</a></li>
-              </ul>
-            </div>
-            <div className="footer-column">
-              <h3 className="footer-heading">Company</h3>
-              <ul>
-                <li><a href="#">About Us</a></li>
-                <li><a href="#">Team</a></li>
-                <li><a href="#">Careers</a></li>
-                <li><a href="#">Contact</a></li>
-              </ul>
-            </div>
-            <div className="footer-column">
-              <h3 className="footer-heading">Resources</h3>
-              <ul>
-                <li><a href="#">Blog</a></li>
-                <li><a href="#">Help Center</a></li>
-                <li><a href="#">Community</a></li>
-                <li><a href="#">Tutorials</a></li>
-              </ul>
-            </div>
-          </div>
+          
         </div>
         <div className="footer-bottom">
           <p>&copy; 2025 JAIBOT Quiz • All Rights Reserved</p>

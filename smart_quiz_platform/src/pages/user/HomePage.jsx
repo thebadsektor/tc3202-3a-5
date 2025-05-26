@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getFirestore, collection, getDocs, query, orderBy, getDoc, doc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
+import QuizInstructionsModal from "./QuizInstructionsModal"; // Import the new component
 
 // Firebase configuration - replace with your own config
 const firebaseConfig = {
@@ -19,7 +20,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export default function HomePage() {
-  const { logout, user } = useAuth();
+  const { currentUser: user, logout } = useAuth();
   const navigate = useNavigate();
   const [availableQuizzes, setAvailableQuizzes] = useState([]);
   const [recentQuizzes, setRecentQuizzes] = useState([]);
@@ -32,6 +33,12 @@ export default function HomePage() {
   });
   const [loading, setLoading] = useState(true);
   const [activeQuiz, setActiveQuiz] = useState(null);
+  const [userProfile, setUserProfile] = useState({
+    firstName: "",
+    lastName: ""
+  });
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  const [selectedQuizId, setSelectedQuizId] = useState(null);
 
   // Fetch available quizzes and user data on component mount
   useEffect(() => {
@@ -52,6 +59,18 @@ export default function HomePage() {
         
         // If user is logged in, fetch their quiz history and stats
         if (user && user.uid) {
+          // Fetch user profile data - specifically firstName
+          const userDocRef = doc(db, "users", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            setUserProfile({
+              firstName: userData.firstName || "",
+              lastName: userData.lastName || ""
+            });
+          }
+          
           // Fetch user's quiz history
           const historySnapshot = await getDocs(
             query(collection(db, "users", user.uid, "quizHistory"), orderBy("completedAt", "desc"))
@@ -167,23 +186,31 @@ export default function HomePage() {
   // Helper function to get color based on quiz title
   function getSubjectColor(title) {
     const titleLower = title.toLowerCase();
-    if (titleLower.includes("math")) return "#4285F4";
-    if (titleLower.includes("science") || titleLower.includes("physics") || titleLower.includes("chemistry")) return "#34A853";
-    if (titleLower.includes("history")) return "#FBBC05";
-    if (titleLower.includes("literature") || titleLower.includes("english")) return "#EA4335";
-    if (titleLower.includes("computer") || titleLower.includes("programming")) return "#7B61FF";
-    if (titleLower.includes("geography")) return "#1DA1F2";
+    if (titleLower.includes("math")) return "#4285F4"; // Blue
+    if (titleLower.includes("science") || titleLower.includes("physics") || titleLower.includes("chemistry")) return "#34A853"; // Green
+    if (titleLower.includes("history")) return "#FBBC05"; // Yellow
+    if (titleLower.includes("literature") || titleLower.includes("english")) return "#7B61FF"; // Purple
+    if (titleLower.includes("computer") || titleLower.includes("programming")) return "#34A853"; // Green
+    if (titleLower.includes("geography")) return "#4285F4"; // Blue
     
-    // Generate a random color if no match
-    const colors = ["#4285F4", "#34A853", "#FBBC05", "#EA4335", "#7B61FF", "#1DA1F2"];
+    // Generate a random color from the allowed colors (Yellow, Green, Blue, Purple)
+    const colors = ["#FBBC05", "#34A853", "#4285F4", "#7B61FF"];
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
-  // Start a new quiz
-  const startQuiz = async (quizId) => {
+  // Prepare to start a quiz (show instructions first)
+  const prepareQuiz = async (quizId) => {
+    setSelectedQuizId(quizId);
+    setShowInstructionsModal(true);
+  };
+
+  // Start a quiz after instructions are shown
+  const startQuiz = async () => {
     try {
+      if (!selectedQuizId) return;
+      
       // Fetch the quiz data from Firestore
-      const quizDoc = await getDoc(doc(db, "quizzes", quizId));
+      const quizDoc = await getDoc(doc(db, "quizzes", selectedQuizId));
       
       if (!quizDoc.exists()) {
         console.error("Quiz not found");
@@ -193,7 +220,7 @@ export default function HomePage() {
       const quizData = quizDoc.data();
       
       // Navigate to the quiz page with the quiz ID
-      navigate(`/quiz/${quizId}`, { 
+      navigate(`/quiz/${selectedQuizId}`, { 
         state: { 
           quizTitle: quizData.title,
           isAdaptive: true
@@ -202,6 +229,18 @@ export default function HomePage() {
     } catch (error) {
       console.error("Error starting quiz:", error);
     }
+  };
+
+  // Handle close of instructions modal
+  const handleCloseInstructions = () => {
+    setShowInstructionsModal(false);
+    startQuiz();
+  };
+
+  // Handle return from instructions modal
+  const handleReturnFromInstructions = () => {
+    setShowInstructionsModal(false);
+    setSelectedQuizId(null);
   };
 
   // Resume an active quiz
@@ -217,12 +256,30 @@ export default function HomePage() {
     }
   };
 
+  // Navigate to Quiz History page
+  const goToQuizHistory = () => {
+    navigate('/quiz-history'); // This should match the route where QuizHistory.jsx is rendered
+  };
+
   return (
     <div style={styles.container}>
+      {showInstructionsModal && (
+        <QuizInstructionsModal 
+          onClose={handleCloseInstructions} 
+          onReturn={handleReturnFromInstructions}
+        />
+      )}
+      
       <header style={styles.header}>
-        <h1 style={styles.title}>JAIBOT Quiz: An AI-Powered Smart Quiz Platform</h1>
+        <h1 style={styles.title}>JAIBOT Quiz</h1>
         <div style={styles.userNav}>
-          <span style={styles.username}>Hi, {user?.displayName || "Learner"}!</span>
+          <span style={styles.username}>Hi, {userProfile.firstName || user?.displayName || ""}!</span>
+          <button 
+            style={styles.historyButton} 
+            onClick={goToQuizHistory}
+          >
+            Quiz History
+          </button>
           <button 
             style={styles.logoutButton} 
             onClick={() => { logout(); navigate("/login"); }}
@@ -266,7 +323,7 @@ export default function HomePage() {
               <div 
                 key={quiz.id} 
                 style={{...styles.quizCard, backgroundColor: quiz.color + "15"}}
-                onClick={() => startQuiz(quiz.id)}
+                onClick={() => prepareQuiz(quiz.id)}
               >
                 <div style={{...styles.quizIcon, backgroundColor: quiz.color}}>{quiz.icon}</div>
                 <h3 style={styles.quizName}>{quiz.title}</h3>
@@ -278,7 +335,7 @@ export default function HomePage() {
                     Added: {new Date(quiz.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <button style={styles.startQuizButton}>Start Quiz</button>
+                <div style={styles.startQuizButton}>Start Quiz</div>
               </div>
             ))}
           </div>
@@ -286,7 +343,7 @@ export default function HomePage() {
           <p style={styles.emptyState}>No quizzes available at the moment.</p>
         )}
       </section>
-
+    
       {recentQuizzes.length > 0 && (
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>Your Recent Quizzes</h2>
@@ -295,7 +352,7 @@ export default function HomePage() {
               <div 
                 key={quiz.id}
                 style={styles.recentQuizCard}
-                onClick={() => startQuiz(quiz.quizId)}
+                onClick={() => prepareQuiz(quiz.quizId)}
               >
                 <div style={{...styles.miniQuizIcon, backgroundColor: quiz.color}}>{quiz.icon}</div>
                 <div style={styles.recentQuizInfo}>
@@ -320,7 +377,7 @@ export default function HomePage() {
               <div 
                 key={quiz.id}
                 style={styles.recommendationCard}
-                onClick={() => startQuiz(quiz.id)}
+                onClick={() => prepareQuiz(quiz.id)}
               >
                 <div style={{...styles.miniQuizIcon, backgroundColor: quiz.color}}>{quiz.icon}</div>
                 <div style={styles.recommendationInfo}>
@@ -334,30 +391,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>Your Learning Journey</h2>
-        <div style={styles.statsCards}>
-          <div style={styles.statCard}>
-            <h3 style={styles.statNumber}>{userStats.quizzesCompleted}</h3>
-            <p style={styles.statLabel}>Quizzes Completed</p>
-          </div>
-          <div style={styles.statCard}>
-            <h3 style={styles.statNumber}>{userStats.averageScore}%</h3>
-            <p style={styles.statLabel}>Average Score</p>
-          </div>
-          <div style={styles.statCard}>
-            <h3 style={styles.statNumber}>{userStats.topicsStrong.length}</h3>
-            <p style={styles.statLabel}>Strong Areas</p>
-          </div>
-        </div>
-        <button 
-          style={styles.viewProgressButton} 
-          onClick={() => navigate("/learning-profile")}
-        >
-          View Detailed Stats
-        </button>
-      </section>
 
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>Our Adaptive Learning Technology</h2>
@@ -425,6 +458,18 @@ const styles = {
     fontSize: "16px",
     fontWeight: "500",
     color: "#444",
+  },
+  historyButton: {
+    padding: "8px 16px",
+    backgroundColor: "#3a41e5",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "500",
+    transition: "all 0.2s",
+    boxShadow: "0 4px 8px rgba(58, 65, 229, 0.2)",
   },
   logoutButton: {
     padding: "8px 16px",
@@ -536,6 +581,9 @@ const styles = {
     cursor: "pointer",
     transition: "transform 0.2s, box-shadow 0.2s",
     boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
     "&:hover": {
       transform: "translateY(-5px)",
       boxShadow: "0 8px 25px rgba(0,0,0,0.1)",
@@ -554,10 +602,11 @@ const styles = {
     boxShadow: "0 8px 15px rgba(0,0,0,0.1)",
   },
   quizName: {
-    fontSize: "22px",
-    fontWeight: "600",
+    fontSize: "20px",
+    fontWeight: "800",  // Bolder for a stronger presence
     color: "#333",
-    marginBottom: "10px",
+    marginBottom: "14px",
+    fontFamily: "'Montserrat', 'Lato', sans-serif",
   },
   quizDescription: {
     fontSize: "15px",
@@ -568,6 +617,7 @@ const styles = {
     fontSize: "13px",
     color: "#888",
     marginBottom: "20px",
+    flex: "1", // This will push the button to the bottom
   },
   startQuizButton: {
     padding: "10px 18px",
@@ -578,6 +628,9 @@ const styles = {
     fontWeight: "500",
     cursor: "pointer",
     transition: "all 0.3s",
+    marginTop: "auto", // Helps align buttons at the bottom
+    width: "100%", // Make button full width for consistent appearance
+    textAlign: "center",
   },
   recentQuizzes: {
     display: "flex",

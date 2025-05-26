@@ -370,6 +370,19 @@ export default function AdminDashboard() {
     }
   };
 
+  // Format date function to handle invalid dates
+  const formatDate = (dateString) => {
+    try {
+      if (!dateString) return "N/A";
+      const date = new Date(dateString);
+      return date instanceof Date && !isNaN(date) 
+        ? date.toLocaleDateString() 
+        : "N/A";
+    } catch (error) {
+      return "N/A";
+    }
+  };
+
   return (
     <div className="admin-dashboard">
       <header className="admin-header">
@@ -479,7 +492,7 @@ export default function AdminDashboard() {
 
                 {quiz && !isLoading && (
                   <div className="quiz-preview">
-                    {/* 📌 Buttons moved to the top */}
+                    {/* Quiz actions at the top */}
                     <div className="quiz-actions">
                       <button onClick={saveQuiz} className="button-save">
                         Save to Firestore
@@ -629,75 +642,10 @@ export default function AdminDashboard() {
                             ))}
                           </div>
                         </div>
-
-                        <div className="question-section">
-                          <h5 className="difficulty-title medium">
-                            Medium Questions:
-                          </h5>
-                          <div className="questions-list">
-                            {quiz.medium.map((q, idx) => (
-                              <div
-                                key={idx}
-                                className="question-item medium-question"
-                              >
-                                <p className="question-text">
-                                  {idx + 1}. {q.question}
-                                </p>
-                                <ul className="answer-choices">
-                                  {q.choices.map((choice, choiceIdx) => (
-                                    <li
-                                      key={choiceIdx}
-                                      className={
-                                        choice === q.correct_answer
-                                          ? "correct-answer"
-                                          : "answer-choice"
-                                      }
-                                    >
-                                      {choice === q.correct_answer ? "✓ " : ""}
-                                      {choice}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="question-section">
-                          <h5 className="difficulty-title hard">
-                            Hard Questions:
-                          </h5>
-                          <div className="questions-list">
-                            {quiz.hard.map((q, idx) => (
-                              <div
-                                key={idx}
-                                className="question-item hard-question"
-                              >
-                                <p className="question-text">
-                                  {idx + 1}. {q.question}
-                                </p>
-                                <ul className="answer-choices">
-                                  {q.choices.map((choice, choiceIdx) => (
-                                    <li
-                                      key={choiceIdx}
-                                      className={
-                                        choice === q.correct_answer
-                                          ? "correct-answer"
-                                          : "answer-choice"
-                                      }
-                                    >
-                                      {choice === q.correct_answer ? "✓ " : ""}
-                                      {choice}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
                       </div>
                     </div>
 
+                    {/* Quiz actions at the bottom */}
                     <div className="quiz-actions">
                       <button onClick={saveQuiz} className="button-save">
                         Save to Firestore
@@ -756,7 +704,7 @@ export default function AdminDashboard() {
                             </td>
                             <td className="table-cell">
                               <div className="quiz-date-cell">
-                                {new Date(quiz.createdAt).toLocaleDateString()}
+                                {formatDate(quiz.createdAt)}
                               </div>
                             </td>
                             <td className="table-cell actions-cell">
